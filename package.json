@@ -1,6 +1,6 @@
 {
   "name": "macoolka-app",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
@@ -27,7 +27,7 @@
     "macoolka-i18n": "^0.2.2",
     "macoolka-log-core": "^0.2.4",
     "macoolka-module-core": "^0.2.0",
-    "macoolka-object": "^0.2.6"
+    "macoolka-object": "^0.2.7"
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
