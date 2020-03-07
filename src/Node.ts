@@ -8,19 +8,21 @@ import * as A from 'fp-ts/lib/Array'
 import * as O from 'fp-ts/lib/Option'
 import * as R from 'fp-ts/lib/Reader'
 import { getApplicativeComposition } from 'fp-ts/lib/Applicative'
-import { showUnknow } from 'macoolka-object'
-import { Predicate, notMaybe as _notMaybe } from 'macoolka-predicate'
+import { showUnknow, mapValues } from 'macoolka-object'
+import { Predicate, notMaybe as _notMaybe, isObject } from 'macoolka-predicate'
 import { Message, MonadI18N } from 'macoolka-i18n'
 import { IO } from 'fp-ts/lib/IO'
 import * as RE from 'fp-ts/lib/ReaderEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 export {
-    E
+    E,
+    RE
 }
 
 export const traverseE = A.array.traverse(E.either)
 export const EO = getApplicativeComposition(E.either, O.option)
-
+export const toMessageValue = (a: unknown) => isObject(a) ? {
+    value:showUnknow.show(a),...mapValues(a, v => showUnknow.show(v))} : { value: showUnknow.show(a) }
 /**
  * The is a app function's result value(sync)
  * @desczh
@@ -41,9 +43,9 @@ export type ReaderNode<A, B>
 export function fromIOToE<MK extends string>({ formatErrorMessage }: MonadI18N<MK>): (option: Message<MK> & { title?: string })
     => <A>(io: IO<A>)
         => IO<Node<A>> {
-    return ({ ...others }) => io => () =>
+    return (option) => io => () =>
         E.tryCatch(io, (error) => {
-            return formatErrorMessage({ ...others, error: error as any })
+            return formatErrorMessage({ ...option, error: error as any })
         })
 }
 
@@ -58,7 +60,7 @@ export function fromReaderToRE<MK extends string>({ formatErrorMessage }: MonadI
         => R.Reader<A, Node<B>> {
     return ({ title, id, value = {} }) => reader => a =>
         E.tryCatch(() => reader(a), (error) => {
-            return formatErrorMessage({ id, title, error: error as any, value: { ...value, value: showUnknow.show(a) } })
+            return formatErrorMessage({ id, title, error: error as any, value: { ...toMessageValue(a), ...value } })
         })
 }
 
@@ -73,7 +75,7 @@ export function fromPredicateToRE<MK extends string>({ formatErrorMessage }: Mon
     return ({ id, value = {}, title }) => predicate => {
 
         return E.fromPredicate(predicate, v => {
-            return formatErrorMessage({ id: id, title, value: { ...value, value: showUnknow.show(v) } })
+            return formatErrorMessage({ id: id, title, value: { ...toMessageValue(v), ...value } })
         })
 
     }

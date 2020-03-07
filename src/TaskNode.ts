@@ -7,14 +7,14 @@ import * as TE from 'fp-ts/lib/TaskEither'
 import * as A from 'fp-ts/lib/Array'
 import * as R from 'fp-ts/lib/Reader'
 import * as T from 'fp-ts/lib/Task'
-import {  notMaybe as _notMaybe } from 'macoolka-predicate'
+import { notMaybe as _notMaybe } from 'macoolka-predicate'
 import { Message, MonadI18N } from 'macoolka-i18n'
 import { IO } from 'fp-ts/lib/IO'
 import * as RTE from 'fp-ts/lib/ReaderTaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import * as MN from './Node'
 export {
-    TE,T,RTE
+    TE, T, RTE
 }
 /**
  * The is a app function's result value
@@ -64,9 +64,9 @@ export function fromReaderToTRE<MK extends string>(m: MonadI18N<MK>): (
  */
 export function fromTaskToTE<MK extends string>(m: MonadI18N<MK>):
     (option: Message<MK> & { title?: string }) => <A>(task: T.Task<A>) => TaskNode<A> {
-    return option => task =>TE.tryCatch(task,error=>{
-       return m.formatErrorMessage({...option,error:error as any})
-    }) 
+    return option => task => TE.tryCatch(task, error => {
+        return m.formatErrorMessage({ ...option, error: error as any })
+    })
 }
 
 /**
@@ -78,10 +78,12 @@ export function fromTaskToTE<MK extends string>(m: MonadI18N<MK>):
 export function fromReaderTaskToTRE<MK extends string>(m: MonadI18N<MK>):
     (option: { title?: string } & Message<MK>) => <A, B> (reader: R.Reader<A, T.Task<B>>)
         => R.Reader<A, TaskNode<B>> {
-    return ({ ...others }) => reader => {
+    return ({ id, title, value }) => reader => a => {
         return pipe(
             reader,
-            R.map(a => fromTaskToTE(m)({ ...others })(a))
-        )
+            R.map(task => TE.tryCatch(task, error => {
+                return m.formatErrorMessage({ value: { ...MN.toMessageValue(a), ...value }, id, title, error: error as any })
+            }))
+        )(a)
     }
 }

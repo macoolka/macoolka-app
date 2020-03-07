@@ -14,7 +14,8 @@
     "forceConsistentCasingInFileNames": true,
     "types": [
       "node",
-      "jest"
+      "jest",
+      "macoolka-object"
     ],
     "lib": [
       "es6",

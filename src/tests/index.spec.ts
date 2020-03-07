@@ -1,4 +1,4 @@
-import { E, BuildMonadNode } from '../'
+import { E, init } from '../'
 import { getValueOption, getValue } from 'macoolka-object'
 import * as R from 'fp-ts/lib/Reader'
 import { pipe } from 'fp-ts/lib/pipeable'
@@ -9,12 +9,15 @@ const data = {
         'macoolka.test.gt2': 'gt2 {value}',
         'macoolka.test.propNotFound': 'propNotFound {name}',
         'macoolka.test.add': 'add error {value}',
+        'macoolka.test.reader': 'add error {a} {b} {c}',
+        'macoolka.test.readerValue': 'add error {value}',
     },
     zh: {
         'macoolka.test.invariant': '无效的值: {value}'
     }
 }
-const nodeM = BuildMonadNode<keyof typeof data.en>({ i18nOption: { data, defaultLocale: 'en' }, moduleName: 'Test', moduleType: 'Function' })
+const nodeM = init<any>({ i18nOption: { data, defaultLocale: 'en' }, moduleName: 'Test', moduleType: 'Function' })
+
 describe('ReaderMessageNode', () => {
     /*   it('invariant', () => {
           const id = 'test.invariant'
@@ -23,6 +26,14 @@ describe('ReaderMessageNode', () => {
           expect(testNotMaybe(null)).toEqual(E.left({ id, value: { value: "null" } }))
           expect(testNotMaybe(1)).toEqual(E.right(1))
       }) */
+    it('formatMessage with defaultValue',()=>{
+        const r=nodeM.formatMessage({id:'none',defaultMessage:'a is {a}.b is {b}',value:{a:'a1',b:'b1'}})
+        expect(r).toEqual('a is a1.b is b1')
+    })
+    it('error',()=>{
+        nodeM.error('error')
+        //expect(r).toEqual('a is a1.b is b1')
+    })
     it('fromNullableToRE', () => {
         const testFromNullable = nodeM.fromNullableToRE({ id: 'macoolka.test.nullable' })
         expect(testFromNullable(undefined)).toEqual(E.left('[Test] null error'))
@@ -63,6 +74,53 @@ describe('ReaderMessageNode', () => {
         pipe(
             add1E(1),
             E.mapLeft(a => expect(a.startsWith(`[Test] add error 1`)).toEqual(true)),
+            E.map(() => {
+                throw new Error()
+            })
+        )
+    })
+    it('fromReaderToRE extract param', () => {
+
+        const error = new Error('error')
+        const add1 = ({ a, b, c }: { a: number, b: string, c: number }) => {
+            if (a === 1) {
+                throw error
+            }
+            return a + b + c
+        }
+        const add1E = nodeM.fromReaderToRE({ id: 'macoolka.test.reader' })(add1)
+
+        expect(add1E({a:4,b:'b',c:3})).toEqual(E.right('4b3'))
+        pipe(
+            add1E({a:1,b:'b',c:3}),
+            
+            E.mapLeft(a =>{
+                expect(a.startsWith(`[Test] add error 1 "b" 3`)).toEqual(true)
+            } ),
+            E.map(() => {
+                throw new Error()
+            })
+        )
+
+    })
+    it('fromReaderToRE extract value param', () => {
+
+        const error = new Error('error')
+        const add1 = ({ a, b, c }: { a: number, b: string, c: number }) => {
+            if (a === 1) {
+                throw error
+            }
+            return a + b + c
+        }
+        const add1E = nodeM.fromReaderToRE({ id: 'macoolka.test.readerValue' })(add1)
+
+        expect(add1E({a:4,b:'b',c:3})).toEqual(E.right('4b3'))
+        pipe(
+            add1E({a:1,b:'b',c:3}),
+            
+            E.mapLeft(a =>{
+                expect(a.startsWith(`[Test] add error { a: 1, b: "b", c: 3 }`)).toEqual(true)
+            } ),
             E.map(() => {
                 throw new Error()
             })
@@ -124,7 +182,7 @@ describe('ReaderMessageNode', () => {
         expect(nodeM.throwException(getName({ a: '1', b: 1 }))).toEqual('1')
         expect(() => nodeM.throwException(getName({ b: 1 }))).toThrowError(`[Test] propNotFound a`)
     })
-    it('throwException', () => {
+    it('warnException', () => {
         const testFromNullable = nodeM.fromNullableToRE({ id: 'macoolka.test.propNotFound', value: { name: 'a' } })
 
         type A = {
