@@ -1,6 +1,6 @@
 {
   "name": "macoolka-app",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
@@ -21,10 +21,10 @@
     "all": "npm run clean && tsc && jest  --coverage && tslint -p tsconfig.json"
   },
   "dependencies": {
-    "fp-ts": "^2.0.2",
+    "fp-ts": "^2.5.3",
     "macoolka-error": "^0.2.2",
     "macoolka-fp": "^0.2.0",
-    "macoolka-i18n": "^0.2.2",
+    "macoolka-i18n": "^0.2.5",
     "macoolka-log-core": "^0.2.4",
     "macoolka-module-core": "^0.2.0",
     "macoolka-object": "^0.2.7"
@@ -40,7 +40,7 @@
     "ts-node": "^8.3.0",
     "tslint": "^5.19.0",
     "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.6.2"
+    "typescript": "^3.8.3"
   },
   "jest": {
     "moduleFileExtensions": [
